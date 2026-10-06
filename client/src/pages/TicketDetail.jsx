@@ -1,9 +1,9 @@
 import { useState, useEffect } from 'react';
 import { useParams, useNavigate, useSearchParams } from 'react-router-dom';
-import { ArrowLeft, Clock, Tag, AlertTriangle } from 'lucide-react';
+import { ArrowLeft, Clock, Tag, AlertTriangle, Check, RotateCcw } from 'lucide-react';
 import { format } from 'date-fns';
 import { fr } from 'date-fns/locale';
-import { getTicket } from '../api/client.js';
+import { getTicket, updateStatus, addComment } from '../api/client.js';
 import { StatusBadge, UrgencyBadge, CategoryBadge } from '../components/StatusBadge.jsx';
 import CommentThread from '../components/CommentThread.jsx';
 
@@ -15,9 +15,10 @@ export default function TicketDetail() {
   const [sp]      = useSearchParams();
 
   const email     = sp.get('email') || localStorage.getItem('user_email') || '';
-  const [ticket, setTicket]   = useState(null);
-  const [loading, setLoading] = useState(true);
-  const [error, setError]     = useState('');
+  const [ticket, setTicket]         = useState(null);
+  const [loading, setLoading]       = useState(true);
+  const [actionLoading, setActLd]   = useState(false);
+  const [error, setError]           = useState('');
 
   const load = async () => {
     try {
@@ -33,6 +34,26 @@ export default function TicketDetail() {
   useEffect(() => { load(); }, [id]);
 
   const handleNewComment = (c) => setTicket(t => ({ ...t, comments: [...(t.comments || []), c] }));
+
+  const handleUserStatusChange = async (newStatus) => {
+    setActLd(true);
+    try {
+      if (newStatus === 'En cours') {
+        // Add automatic comment explaining reopen
+        await addComment(id, {
+          content: "🔄 Ticket rouvert par l'utilisateur (le problème persiste).",
+          author: email || ticket.user_email,
+          author_role: 'user'
+        });
+      }
+      const { data } = await updateStatus(id, newStatus);
+      await load();
+    } catch (err) {
+      alert("Erreur lors de la mise à jour du statut");
+    } finally {
+      setActLd(false);
+    }
+  };
 
   const STATUS_STEPS = ['Nouveau', 'En cours', 'En attente', 'Résolu', 'Fermé'];
   const stepIdx = ticket ? STATUS_STEPS.indexOf(ticket.status) : 0;
@@ -93,6 +114,44 @@ export default function TicketDetail() {
           )}
         </div>
       </div>
+
+      {/* User validation banner when status is 'Résolu' */}
+      {ticket.status === 'Résolu' && (
+        <div className="card fade-up" style={{
+          background: 'rgba(16, 185, 129, 0.1)',
+          border: '1.5px solid var(--success)',
+          marginBottom: 16,
+          padding: 20
+        }}>
+          <div style={{ display: 'flex', alignItems: 'center', gap: 10, marginBottom: 8 }}>
+            <span style={{ fontSize: 22 }}>🎉</span>
+            <h3 style={{ margin: 0, color: 'var(--success)', fontSize: 16 }}>Validation de la résolution</h3>
+          </div>
+          <p style={{ fontSize: 14, color: 'var(--text-2)', marginBottom: 16, lineHeight: 1.5 }}>
+            Le service informatique a indiqué que votre problème est résolu. Merci de valider pour clôturer et archiver définitivement ce ticket, ou de le rouvrir si vous avez toujours besoin d'assistance.
+          </p>
+          <div style={{ display: 'flex', gap: 12, flexWrap: 'wrap' }}>
+            <button
+              className="btn"
+              style={{ background: 'var(--success)', color: '#fff', border: 'none', fontWeight: 600, padding: '10px 18px', borderRadius: 'var(--radius-sm)' }}
+              onClick={() => handleUserStatusChange('Fermé')}
+              disabled={actionLoading}
+              id="btn-user-confirm-closed"
+            >
+              <Check size={16} /> Confirmer & Archiver le ticket
+            </button>
+            <button
+              className="btn btn-secondary"
+              style={{ padding: '10px 18px', borderRadius: 'var(--radius-sm)' }}
+              onClick={() => handleUserStatusChange('En cours')}
+              disabled={actionLoading}
+              id="btn-user-reopen"
+            >
+              <RotateCcw size={16} /> Le problème persiste (Rouvrir)
+            </button>
+          </div>
+        </div>
+      )}
 
       {/* Progress bar */}
       <div className="card fade-up fade-up-d1" style={{ marginBottom: 16 }}>

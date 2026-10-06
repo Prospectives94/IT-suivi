@@ -11,7 +11,7 @@ const createTransporter = () => nodemailer.createTransport({
   tls: { ciphers: 'SSLv3' },
 });
 
-const APP_URL = () => process.env.APP_URL || 'http://localhost:3001';
+const APP_URL = () => process.env.CLIENT_URL || process.env.APP_URL || 'http://localhost:3001';
 const FROM    = () => `"IT Ticket Manager" <${process.env.SMTP_USER}>`;
 
 const STATUS_COLORS = {
@@ -113,8 +113,8 @@ const sendStatusUpdateEmail = async (ticket, oldStatus) => {
     <div class="field"><div class="fl">Ticket</div><div class="fv"><strong>#${ticket.id} — ${ticket.title}</strong></div></div>
     <div class="field"><div class="fl">Ancien statut</div><div class="fv">${oldStatus}</div></div>
     <div class="field"><div class="fl">Nouveau statut</div><div class="fv"><strong>${ticket.status}</strong></div></div>
-    ${isResolved ? `<div class="alert-ok">✅ Votre demande a été résolue par le service IT. Merci de votre patience !</div>` : ''}
-    <a href="${APP_URL()}/my-tickets?email=${encodeURIComponent(ticket.user_email)}" class="btn">Voir mes tickets →</a>
+    ${ticket.status === 'Résolu' ? `<div class="alert-ok">✅ Votre demande a été traitée et marquée comme <strong>Résolue</strong> par le service IT.<br><br>👉 <strong>Merci de vous connecter pour valider la résolution et archiver le ticket</strong> (ou le rouvrir si le problème persiste).</div>` : ticket.status === 'Fermé' ? `<div class="alert-ok">🔒 Ce ticket est désormais archivé et clôturé.</div>` : ''}
+    <a href="${APP_URL()}/ticket/${ticket.id}?email=${encodeURIComponent(ticket.user_email)}" class="btn">Accéder à mon ticket →</a>
   `;
 
   const t = createTransporter();
