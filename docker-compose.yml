@@ -1,0 +1,12 @@
+version: '3.8'
+
+services:
+  it-manager:
+    build: .
+    container_name: it-ticket-manager
+    ports:
+      - "3001:3001"
+    volumes:
+      - ./server/db:/app/server/db
+      - ./server/.env:/app/server/.env
+    restart: unless-stopped
