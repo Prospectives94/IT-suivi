@@ -2,7 +2,24 @@ const Database = require('better-sqlite3');
 const path = require('path');
 const fs = require('fs');
 
-const dbPath = process.env.DB_PATH || path.join(__dirname, 'tickets.sqlite');
+const defaultPath = path.join(__dirname, 'tickets.sqlite');
+let dbPath = process.env.DB_PATH;
+
+if (!dbPath) {
+  if (process.env.VERCEL) {
+    dbPath = path.join('/tmp', 'tickets.sqlite');
+    if (!fs.existsSync(dbPath) && fs.existsSync(defaultPath)) {
+      try {
+        fs.copyFileSync(defaultPath, dbPath);
+      } catch (e) {
+        console.warn('⚠️ Imp. de copier tickets.sqlite dans /tmp:', e.message);
+      }
+    }
+  } else {
+    dbPath = defaultPath;
+  }
+}
+
 const dbDir = path.dirname(dbPath);
 
 if (!fs.existsSync(dbDir)) {
@@ -12,7 +29,11 @@ if (!fs.existsSync(dbDir)) {
 const db = new Database(dbPath);
 
 // Performance & integrity
-db.pragma('journal_mode = WAL');
+try {
+  db.pragma('journal_mode = WAL');
+} catch (e) {
+  console.warn('⚠️ Mode WAL indisponible, fallback en journalisation standard');
+}
 db.pragma('foreign_keys = ON');
 
 // Create tables

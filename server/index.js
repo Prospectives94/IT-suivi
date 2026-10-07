@@ -21,8 +21,12 @@ app.get('*', (req, res) => {
   res.sendFile(path.join(clientDist, 'index.html'));
 });
 
-app.listen(PORT, () => {
-  console.log(`\n🚀 IT Ticket Manager démarré sur http://localhost:${PORT}`);
-  console.log(`   Dashboard technicien : http://localhost:${PORT}/tech`);
-  console.log(`   Analytics            : http://localhost:${PORT}/analytics\n`);
-});
+if (!process.env.VERCEL) {
+  app.listen(PORT, () => {
+    console.log(`\n🚀 IT Ticket Manager démarré sur http://localhost:${PORT}`);
+    console.log(`   Dashboard technicien : http://localhost:${PORT}/tech`);
+    console.log(`   Analytics            : http://localhost:${PORT}/analytics\n`);
+  });
+}
+
+module.exports = app;
