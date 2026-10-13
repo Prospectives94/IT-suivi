@@ -1,8 +1,9 @@
 import { useState, useEffect, useCallback } from 'react';
 import { useNavigate, useSearchParams } from 'react-router-dom';
-import { Search, RefreshCw, Filter, Star, AlertTriangle, CheckCircle, Clock, Inbox } from 'lucide-react';
+import { Search, RefreshCw, Filter, Star, AlertTriangle, CheckCircle, Clock, Inbox, Key } from 'lucide-react';
 import { getTickets, techLogin, login } from '../api/client.js';
 import TicketCard from '../components/TicketCard.jsx';
+import ChangePasswordModal from '../components/ChangePasswordModal.jsx';
 
 const STATUSES    = ['Nouveau', 'En cours', 'En attente', 'Résolu', 'Fermé'];
 const CATEGORIES  = ['Matériel', 'Logiciel', 'Accès', 'Réseau', 'Autre'];
@@ -15,6 +16,7 @@ export default function TechDashboard() {
   const [pin, setPin]             = useState('');
   const [pinError, setPinError]   = useState('');
   const [pinLoading, setPinLoad]  = useState(false);
+  const [showPwdModal, setShowPwdModal] = useState(false);
 
   const [tickets, setTickets]     = useState([]);
   const [loading, setLoading]     = useState(false);
@@ -51,8 +53,12 @@ export default function TechDashboard() {
       const { data } = await login(pin);
       sessionStorage.setItem(`${data.role}_auth`, 'true');
       setAuthed(true);
-    } catch {
-      setPinError('Code d\'accès incorrect');
+    } catch (err) {
+      if (err.response?.status === 401) {
+        setPinError('Code d\'accès incorrect');
+      } else {
+        setPinError('Impossible de contacter le serveur (port 3001). Vérifiez qu\'il est démarré.');
+      }
     } finally {
       setPinLoad(false);
     }
@@ -96,8 +102,20 @@ export default function TechDashboard() {
           <button type="submit" className="btn btn-primary btn-lg btn-full" disabled={pinLoading || !pin} id="btn-tech-login">
             {pinLoading ? <><span className="spinner" /> Vérification…</> : '🚀 Accéder au dashboard'}
           </button>
+          <div style={{ textAlign: 'center', marginTop: 16 }}>
+            <button
+              type="button"
+              className="btn btn-ghost btn-sm"
+              onClick={() => setShowPwdModal(true)}
+              style={{ fontSize: 13, color: 'var(--text-3)' }}
+              id="btn-login-change-pwd"
+            >
+              <Key size={13} /> Changer le code d'accès
+            </button>
+          </div>
         </form>
       </div>
+      <ChangePasswordModal isOpen={showPwdModal} onClose={() => setShowPwdModal(false)} />
     </div>
   );
 
@@ -113,8 +131,11 @@ export default function TechDashboard() {
             <div className="live-dot" /> Live
           </div>
         </div>
-        <div style={{ display: 'flex', gap: 8 }}>
+        <div style={{ display: 'flex', gap: 8, alignItems: 'center' }}>
           <button className="btn btn-ghost btn-icon" onClick={load} title="Rafraîchir" id="btn-refresh-dashboard"><RefreshCw size={16} /></button>
+          <button className="btn btn-secondary btn-sm" onClick={() => setShowPwdModal(true)} id="btn-change-pwd">
+            <Key size={14} /> Mot de passe
+          </button>
           <button className="btn btn-secondary btn-sm" onClick={() => navigate('/analytics')} id="btn-go-analytics">📊 Analytics</button>
           <button className="btn btn-ghost btn-sm" onClick={logout}>Déconnexion</button>
         </div>
@@ -193,6 +214,8 @@ export default function TechDashboard() {
           </div>
         </>
       )}
+
+      <ChangePasswordModal isOpen={showPwdModal} onClose={() => setShowPwdModal(false)} />
     </div>
   );
 }
