@@ -4,6 +4,9 @@ const fs = require('fs');
 
 const defaultPath = path.join(__dirname, 'tickets.sqlite');
 let dbPath = process.env.DB_PATH;
+if (dbPath && !path.isAbsolute(dbPath)) {
+  dbPath = path.resolve(__dirname, '..', dbPath);
+}
 
 if (!dbPath) {
   if (process.env.VERCEL) {
@@ -71,6 +74,12 @@ db.exec(`
     new_status TEXT NOT NULL,
     changed_at DATETIME DEFAULT CURRENT_TIMESTAMP,
     FOREIGN KEY (ticket_id) REFERENCES tickets(id) ON DELETE CASCADE
+  );
+
+  CREATE TABLE IF NOT EXISTS app_settings (
+    key TEXT PRIMARY KEY,
+    value TEXT NOT NULL,
+    updated_at DATETIME DEFAULT CURRENT_TIMESTAMP
   );
 `);
 
