@@ -16,6 +16,7 @@ Système de gestion et de suivi de demandes de support informatique (Ticketing I
 
 ### 🛠️ Côté Technicien (`/tech`)
 * **Authentification sécurisée par PIN** (ex: `IT2024`).
+* **Modification du mot de passe** : Changement du code d'accès direct depuis le dashboard ou l'écran de connexion (stocké en base SQLite).
 * **Tableau de bord complet** : Filtrage par statut, catégorie, urgence, recherche textuelle et tri par priorité.
 * **Gestion des statuts** : `Nouveau` ➔ `En cours` ➔ `En attente` ➔ `Résolu` ➔ `Fermé`.
 * **Indicateur de retard SLA** : Détection automatique des tickets inactifs depuis plus de 48h.
