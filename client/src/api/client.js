@@ -15,5 +15,7 @@ export const addComment       = (id, data)     => api.post(`/tickets/${id}/comme
 export const getAnalytics = () => api.get('/analytics');
 
 // Auth
-export const login     = (password) => api.post('/auth/login', { password });
-export const techLogin = (password) => api.post('/auth/tech', { password });
+export const login          = (password) => api.post('/auth/login', { password });
+export const techLogin      = (password) => api.post('/auth/tech', { password });
+export const changePassword = (currentPassword, newPassword) =>
+  api.post('/auth/change-password', { currentPassword, newPassword });
